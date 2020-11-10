@@ -1,0 +1,17 @@
+{
+  "builders": [
+    {
+      "communicator": "ssh",
+      "source_path": "ubuntu/focal64",
+      "provider": "virtualbox",
+      "add_force": true,
+      "type": "vagrant"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "ansible",
+      "playbook_file": "./ansible/playbook.yml"
+    }
+  ]
+}
