@@ -7,23 +7,23 @@ postgres_password: password
 # --------------------------------------------------------- 00-init.yaml ---------------------------------------------------------
 
 mongodb:
-  _install: true
+  _install: false
 
 elasticsearch:
-  _install: true
+  _install: false
 
 graylog:
-  _install: true
+  _install: false
 
 cert_manager:
   _install: true
 
 fluentd:
-  _install: true
+  _install: false
 
-prometheus_operator:
+kube_prometheus_stack:
   _install: true
-  prometheus-operator:
+  kube-prometheus-stack:
     prometheus:
       prometheusSpec:
         replicas: 1
@@ -62,14 +62,14 @@ nginx_ingress:
       enabled: "true"
 
 kafka_manager:
-  _install: true
+  _install: false
   basicAuth:
     enabled: true
     username: kafkamanager-user
     password: password
 
 velero:
-  _install: true
+  _install: false
   objectStorageBackupReplicaCount: 1
   local:
     accessKey: accessKey

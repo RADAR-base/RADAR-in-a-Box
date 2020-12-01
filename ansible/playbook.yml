@@ -6,11 +6,14 @@
     helmfile_version: v0.134.0
     k3s_version: v1.19.3+k3s2
     radar_kubernetes_version: dev
+    sops_version: 3.6.1
 
   tasks:
     - name: Install packages
       package:
-        name: 'git'
+        name:
+          - git
+          - openjdk-11-jre
         state: present
 
     - name: Create temporary helm directory
@@ -41,6 +44,13 @@
       file:
         path: /tmp/helm
         state: absent
+
+    - name: Install a .deb package from the internet
+      apt:
+        deb: https://github.com/mozilla/sops/releases/download/v{{ sops_version }}/sops_{{ sops_version }}_amd64.deb
+
+    - name: Install helm-secrets
+      command: helm plugin install https://github.com/zendesk/helm-secrets
 
     - name: Install helm-diff
       command: helm plugin install https://github.com/databus23/helm-diff
@@ -73,11 +83,16 @@
     - name: Install K3S
       command: /opt/k3s-install.sh
 
+    #- name: Get RADAR-Kubernetes
+    #  git:
+    #    repo: 'https://github.com/RADAR-base/RADAR-Kubernetes.git'
+    #    dest: /opt/RADAR-Kubernetes
+    #    version: "{{ radar_kubernetes_version }}"
+
     - name: Get RADAR-Kubernetes
-      git:
-        repo: 'https://github.com/RADAR-base/RADAR-Kubernetes.git'
-        dest: /opt/RADAR-Kubernetes
-        version: {{ radar_kubernetes_version }}
+      copy:
+        src: files/RADAR-Kubernetes
+        dest: /opt/
 
     - name: Create environments.yaml
       copy:
@@ -94,3 +109,125 @@
         src: templates/production.yaml.gotmpl
         dest: /opt/RADAR-Kubernetes/production.yaml.gotmpl
 
+    - name: Create temporary helm directory
+      file:
+        path: /opt/RADAR-Kubernetes/bin/keystore-init
+        mode: '0755'
+
+    - name: Create MP keys
+      command: 
+        cmd: /opt/RADAR-Kubernetes/bin/keystore-init
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        MANAGEMENTPORTAL_KEY_DNAME: "cn=Unknown,ou=Unknown,o=Unknown,c=Unknown"
+
+    - name: Create kubectl completion file
+      shell: kubectl completion bash > /etc/rancher/k3s/completion.bash.inc
+
+    - name: Add kubectl completion config to bashrc of root user
+      lineinfile:
+        path: /home/root/.bashrc
+        line: source '/etc/rancher/k3s/completion.bash.inc'
+        create: yes
+
+    - name: Add kubectl completion config to bashrc of vagrant user
+      lineinfile:
+        path: /home/vagrant/.bashrc
+        line: source '/etc/rancher/k3s/completion.bash.inc'
+        create: yes
+
+    - name: Add kube config path to bashrc of root user
+      lineinfile:
+        path: /home/root/.bashrc
+        line: export KUBECONFIG="/etc/rancher/k3s/k3s.yaml"
+        create: yes
+
+    - name: Add kube config path to bashrc of vagrant user
+      lineinfile:
+        path: /home/vagrant/.bashrc
+        line: export KUBECONFIG="/etc/rancher/k3s/k3s.yaml"
+        create: yes
+
+    - name: Install the RADAR-Kubernetes (Init)
+      command: 
+        cmd: helmfile -f helmfile.d/00-init.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Base)
+      command:
+        cmd: helmfile -f helmfile.d/10-base.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Management Portal)
+      command:
+        cmd: helmfile -f helmfile.d/10-managementportal.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Fitbit)
+      command:
+        cmd: helmfile -f helmfile.d/20-fitbit.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Grafana)
+      command:
+        cmd: helmfile -f helmfile.d/20-grafana.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Ingestion)
+      command:
+        cmd: helmfile -f helmfile.d/20-ingestion.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Kafka Analysis)
+      command:
+        cmd: helmfile -f helmfile.d/20-kafka-analysis.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Redcap)
+      command:
+        cmd: helmfile -f helmfile.d/20-redcap.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (S3)
+      command:
+        cmd: helmfile -f helmfile.d/20-s3.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Upload)
+      command:
+        cmd: helmfile -f helmfile.d/20-upload.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Confluent Cloud)
+      command:
+        cmd: helmfile -f helmfile.d/30-confluent-cloud.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+    - name: Install the RADAR-Kubernetes (Velero)
+      command:
+        cmd: helmfile -f helmfile.d/99-velero.yaml sync --concurrency 1
+        chdir: /opt/RADAR-Kubernetes/
+      environment:
+        KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
