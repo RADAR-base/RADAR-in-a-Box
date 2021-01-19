@@ -50,7 +50,7 @@
         deb: https://github.com/mozilla/sops/releases/download/v{{ sops_version }}/sops_{{ sops_version }}_amd64.deb
 
     - name: Install helm-secrets
-      command: helm plugin install https://github.com/zendesk/helm-secrets
+      command: helm plugin install https://github.com/jkroepke/helm-secrets
 
     - name: Install helm-diff
       command: helm plugin install https://github.com/databus23/helm-diff
