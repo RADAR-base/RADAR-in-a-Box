@@ -10,7 +10,7 @@ System with `vagrant`, `packer` and VirtualBox installed.
 
 Set up a RADAR-Kubernetes environemnt first
 ```
-git clone https://github.com/RADAR-base/RADAR-Kubernetes.git ansible/files/RADAR-Kubernetes
+git clone --branch dev https://github.com/RADAR-base/RADAR-Kubernetes.git ansible/files/RADAR-Kubernetes
 ```
 
 Then build the image with
