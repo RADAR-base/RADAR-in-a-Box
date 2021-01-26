@@ -4,7 +4,7 @@ Virtual machine containing Radar-Base stack ready to run. It uses Hashicorp Pack
 
 ## Requirements
 
-System with `vagrant`, `packer` and VirtualBox installed.
+System with `vagrant`, `packer`, `ansible` and VirtualBox installed.
 
 # Usage
 
