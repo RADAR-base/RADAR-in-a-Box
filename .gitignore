@@ -1,3 +1,4 @@
 output-vagrant/
+variables.pkrvars.hcl
 .vagrant
 ansible/files/RADAR-Kubernetes/

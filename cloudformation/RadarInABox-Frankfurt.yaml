@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This CloudFormation Template deploys a Radar-in-a-Box server.
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: Domain
+        Parameters:
+          - DomainName
+      - Label:
+          default: Resources
+        Parameters:
+          - InstanceType
+          - VolumeSizeGB
+      - Label:
+          default: Security
+        Parameters:
+          # - InstancePassword
+          - KeyName
+          - AccessCidr
+      - Label:
+          default: Networking
+        Parameters:
+          - VPC
+          - Subnet
+    ParameterLabels:
+      # InstancePassword:
+      #   default: Instance Password
+      AccessCidr:
+        default: Limit access to IP address range?
+      InstanceType:
+        default: Instance type to use for Radar-in-a-Box instance
+      VolumeSizeGB:
+        default: Disk space for Radar-in-a-Box instance
+      VPC:
+        default: VPC in which to deploy the Radar-in-a-Box instance
+      Subnet:
+        default: Subnet to deploy the Radar-in-a-Box instance
+      KeyName:
+        default: SSH key used for connecting to server
+      DomainName:
+        default: DomainName
+
+Parameters:
+  KeyName:
+    Description: '[ Required ] Name of an existing EC2 KeyPair to enable SSH access to the instance'
+    Type: "AWS::EC2::KeyPair::KeyName"
+  DomainName:
+    Description: '[ Required ] Domain name'
+    Type: String
+  AccessCidr:
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    Description: >-
+      [ Required ] The CIDR IP range that is permitted to access your
+      Radar-in-a-Box instances. Note: A value of 0.0.0.0/0 will allow access
+      from ANY IP address.
+    Type: String
+    Default: 0.0.0.0/0
+  InstanceType:
+    Type: String
+    Description: >-
+      [ Required ] The size of each Radar in a box instance. t3a.xlarge is
+      usually enough for a small trial.
+    AllowedValues: [t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      t3a.xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      m5.large, m5.xlarge, m5.2xlarge, m5.4xlarge,
+      c5.large, c5.xlarge, c5.2xlarge, c5.4xlarge, c5.9xlarge,
+      g3.8xlarge,
+      r5.large, r5.xlarge, r5.2xlarge, r5.4xlarge, r3.12xlarge,
+      i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
+    Default: t3a.xlarge
+  VolumeSizeGB:
+    Type: Number
+    Default: 110
+    MinValue: 110
+    MaxValue: 16000
+    Description: >-
+      [ Required ] Defines the disk size of the Radar-in-a-Box instance in GBs.
+      The minimum size is 100GB and the maximum size is 16,000GB (or 16TB)
+  # InstancePassword:
+  #   AllowedPattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.{8,41}$)[a-zA-Z\d!@#]*$'
+  #   ConstraintDescription: >-
+  #     Must have a length of 8-41 and be letters (upper and lower), at least 1
+  #     number, and optionally these special characters !@#
+  #   Description: >-
+  #     [ Required ] This password will be used for the "admin" user account of
+  #     all of the deployed instances.  It must have a length of 8-41 and be
+  #     letters (upper and lower), at least one number, and optionally these
+  #     special characters !@#
+  #   MaxLength: 41
+  #   MinLength: 8
+  #   Type: String
+  #   NoEcho: true
+  VPC:
+    Type: 'AWS::EC2::VPC::Id'
+    Description: '[ Required ] The VPC that will be used for the Radar-in-a-box instances'
+  Subnet:
+    Type: 'AWS::EC2::Subnet::Id'
+    Description: '[ Required ] The VPC that will be used for the Radar-in-a-box instances'
+Mappings:
+  RegionMap:
+    eu-central-1:
+      AMI: ami-0beec5608e38adcf7
+Resources:
+  RBSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security Group for Radar-in-a-Box
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref AccessCidr
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: !Ref AccessCidr
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: !Ref AccessCidr
+        - IpProtocol: tcp
+          FromPort: '6443'
+          ToPort: '6443'
+          CidrIp: !Ref AccessCidr
+      Tags:
+        - Key: Name
+          Value: RB Security Group
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: ba99fdf9-b2a4-41da-9a1a-9b07ea975ef5
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap
+        - RegionMap
+        - !Ref 'AWS::Region'
+        - AMI
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref Subnet
+      SecurityGroupIds:
+        - !GetAtt RBSG.GroupId
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref VolumeSizeGB
+      UserData:
+        'Fn::Base64': !Sub |
+          #!/bin/bash
+          export diskname=`lsblk | grep disk | cut -d " " -f 1`
+          sudo growpart /dev/$diskname 0
+          sudo resize2fs /dev/${!diskname}1
+          echo "server_name: ${DomainName}" > /opt/RADAR-Kubernetes/custom.yaml
+      Tags:
+        - Key: Name
+          Value: !Sub 'RadarIinaBox-${AWS::StackName}'c
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 22dd9cf4-543e-4c5e-a105-37cd957b72cc
+Outputs:
+  CloudFrontURL:
+    Value: !GetAtt EC2Instance.PublicIp
+  RadarinaBoxInstances:
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !Ref 'AWS::Region'
+        - .console.aws.amazon.com/ec2/v2/home?region=
+        - !Ref 'AWS::Region'
+        - '#Instances:search='
+        - !Sub 'RadarinaBox-${AWS::StackName}'

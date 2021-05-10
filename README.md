@@ -7,14 +7,16 @@ Virtual machine containing Radar-Base stack ready to run. It uses Hashicorp Pack
 System with `vagrant`, `packer`, `ansible` and VirtualBox installed.
 
 # Usage
-
-Set up a RADAR-Kubernetes environemnt first
+First create a file named `variables.pkrvars.hcl` and put AWS credentials in this format:
 ```
-git clone --branch dev https://github.com/RADAR-base/RADAR-Kubernetes.git ansible/files/RADAR-Kubernetes
+aws_access_key = "XXXX"
+aws_secret_key = "XXXX"
 ```
 
 Then build the image with
 
 ```
-packer build image.json
+packer build -var-file="variables.pkrvars.hcl" packer/aws.pkr.hcl
 ```
+
+If you add `-debug` flag packer will ask a prompt for every step and leaves an SSH private key so you could SSH into the packer machine and inspect the build.

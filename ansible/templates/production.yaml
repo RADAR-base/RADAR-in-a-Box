@@ -1,4 +1,4 @@
-ontext: default
+context: default
 server_name: example.com
 maintainer_email: MAINTAINER_EMAIL
 kafka_num_brokers: 3
@@ -130,6 +130,7 @@ management_portal:
   _install: true
   replicaCount: 1  # should be 1
   postgres:
+    host: postgresql
     password: password
     ssl:
       enabled: false
@@ -195,7 +196,7 @@ radar_rest_sources_backend:
   _install: true
   replicaCount: 1
   postgres:
-    host: postgresql-postgresql
+    host: postgresql
     user: postgres
     password: password
     ssl:
@@ -342,4 +343,3 @@ timescaledb:
 radar_jdbc_connector:
   _install: true
   replicaCount: 1
-

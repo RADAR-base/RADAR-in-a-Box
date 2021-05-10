@@ -4,4 +4,4 @@ environments:
     - ../base.yaml
     - ../production.yaml
     - ../production.yaml.gotmpl
-
+    - ../custom.yaml
