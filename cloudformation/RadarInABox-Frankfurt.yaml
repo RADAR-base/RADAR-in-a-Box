@@ -160,7 +160,7 @@ Resources:
           echo "server_name: ${DomainName}" > /opt/RADAR-Kubernetes/custom.yaml
       Tags:
         - Key: Name
-          Value: !Sub 'RadarIinaBox-${AWS::StackName}'c
+          Value: !Sub 'RadarIinaBox-${AWS::StackName}'
     Metadata:
       'AWS::CloudFormation::Designer':
         id: 22dd9cf4-543e-4c5e-a105-37cd957b72cc
