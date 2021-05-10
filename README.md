@@ -12,11 +12,13 @@ For connecting to the server use SSH user `ubuntu` and the EC2 KeyPair specified
 Installation repository is on `/opt/Radar-Kubernetes` and you can follow documentation on (Radar-Kubernetes)[https://github.com/RADAR-base/RADAR-Kubernetes] to work with this the application stack.  `kubectl`, `helm` and `helmfile` are also installed on the server.
 Finally you will need to point a DNS domain name to the EC2 IP address in order to access the Management Portal and other web portals.
 
-## Development
+# Development
 
-System with `vagrant`, `packer`, `ansible` and VirtualBox installed.
+Following tools should be installed on local machine:
+- awscli
+- packer
+- ansible
 
-# Usage
 First create a file named `variables.pkrvars.hcl` and put AWS credentials in this format:
 ```
 aws_access_key = "XXXX"
