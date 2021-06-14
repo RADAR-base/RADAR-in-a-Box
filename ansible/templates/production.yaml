@@ -1,5 +1,5 @@
-context: default
-server_name: example.com
+kubeContext: default
+server_name: example.org
 maintainer_email: MAINTAINER_EMAIL
 kafka_num_brokers: 3
 postgres_password: password
@@ -114,21 +114,16 @@ cp_kafka:
 
 cp_schema_registry:
   _install: true
-  replicaCount: 1
 
 catalog_server:
   _install: true
-  replicaCount: 1
-  schema_registry: http://cp-schema-registry:8081
 
 postgresql:
-  _install: true
   persistence:
     size: 8Gi
 
 management_portal:
   _install: true
-  replicaCount: 1  # should be 1
   postgres:
     host: postgresql
     password: password
@@ -139,21 +134,30 @@ management_portal:
     catalogue_server_enable_auto_import: true
     common_admin_password: password
     common_privacy_policy_url: http://info.thehyve.nl/radar-cns-privacy-policy
-    frontend_client_secret: password
     oauth_checking_key_aliases_0: radarbase-managementportal-ec
     oauth_checking_key_aliases_1: selfsigned
   from_email: me@example.com
-  client_secrets:
-    prmt: secret
-    armt: secret
-    radar_redcap_integrator: secret
-    radar_upload_backend: secret
-    radar_upload_connect: secret
-    radar_upload_frontend: secret
-    radar_rest_sources_backend: secret
-    radarFitbitConnector: secret
-    radarAppconfig: secret
-  extra_oauth_clients: []
+  oauth_clients:
+    pRMT:
+      enable: true
+      client_secret: "saturday$SHARE$scale"
+    aRMT:
+      enable: true
+    radar_appconfig:
+      # May be random, but it must be secure.
+      client_secret: null
+    radar_fitbit_connector:
+      # May be random, but it must be secure.
+      client_secret: null
+    radar_rest_sources_auth_backend:
+      # May be random, but it must be secure.
+      client_secret: null
+    radar_upload_backend:
+      # May be random, but it must be secure.
+      client_secret: null
+    radar_upload_connect:
+      # May be random, but it must be secure.
+      client_secret: null
   smtp:
     enabled: false
     host: smtp
@@ -164,10 +168,6 @@ management_portal:
 
 app_config:
   _install: true
-  replicaCount: 1
-  clientSecret: secret
-  jdbc:
-    password: password
 
 smtp:
   _install: true
@@ -216,19 +216,19 @@ radar_gateway:
 # --------------------------------------------------------- 20-kafka-analysis.yaml ---------------------------------------------------------
 
 radar_backend_monitor:
-  _install: true
+  _install: false
   replicaCount: 1
   persistence:
     size: 1Gi
 
 radar_backend_stream:
-  _install: true
+  _install: false
   replicaCount: 1
 
 # --------------------------------------------------------- 20-redcap.yaml ---------------------------------------------------------
 
 radar_integration:
-  _install: true
+  _install: false
   replicaCount: 1
   oauth_client_id: radar_redcap_integrator
   oauth_client_secret: secret
@@ -245,22 +245,22 @@ radar_integration:
 radar_upload_postgres_password: password
 
 radar_upload_postgresql:
-  _install: true
+  _install: false
   persistence:
     size: 8Gi
 
 radar_upload_connect_backend:
-  _install: true
+  _install: false
   replicaCount: 1
   client_id: radar_upload_backend
 
 radar_upload_connect_frontend:
-  _install: true
+  _install: false
   replicaCount: 1
   vue_app_client_id: radar_upload_frontend
 
 radar_upload_source_connector:
-  _install: true
+  _install: false
   replicaCount: 1
   client_id: radar_upload_connect
 
@@ -338,7 +338,7 @@ timescaledb:
   _install: true
   replicaCount: 1
   persistence:
-    size: 8Gi
+    size: 30Gi
 
 radar_jdbc_connector:
   _install: true
